@@ -1,5 +1,42 @@
 ```
-.env.local
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+
+# Environment variables
 .env
-.env.*
+.env.local
+*.env.*
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Python cache (if present)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Coverage reports
+coverage/
+htmlcov/
+
+# Distribution / packaging
+*.tar.gz
+*.whl
+*.egg
+*.egg-info/
+
 ```
