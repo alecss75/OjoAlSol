@@ -7,11 +7,12 @@
 import { validateCoordinates } from '../utils/validation.js'
 import { ApiError, ValidationError } from '../utils/errors.js'
 import { API_BASE_URLS } from '../constants/apiConstants.js'
+import { config } from '../config/environment.js'
 
 const OPENWEATHER_API_BASE = API_BASE_URLS.OPENWEATHER
 
-// Note: API key should be set via environment variable VITE_OPENWEATHER_API_KEY
-const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY || ''
+// Use API key from environment configuration
+const API_KEY = config.openWeatherApiKey
 
 /**
  * Get current weather data for a location
@@ -152,7 +153,7 @@ export async function getWeatherForecast(lat, lng) {
 /**
  * Calculate sunset quality score based on weather conditions
  * @param {Object} weatherData - Weather data from API
- * @returns {Object} Quality score and analysis
+ * @returns {Object} Quality score and analysis (score 0-100, quality label, factors)
  */
 export function calculateSunsetQuality(weatherData) {
   if (!weatherData) {
