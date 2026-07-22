@@ -652,3 +652,377 @@
   color: #64748b;
   font-size: 0.85rem;
 }
+
+/* Loading Skeleton */
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.5rem;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-text {
+  height: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-title {
+  height: 1.5rem;
+  width: 60%;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton-card {
+  height: 200px;
+  border-radius: 0.85rem;
+}
+
+/* Responsive Design Improvements */
+@media (max-width: 768px) {
+  .app-shell {
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .hero {
+    padding: 1.5rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+  }
+
+  .panel-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .spots-grid,
+  .favorites-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .compare-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .map-container {
+    grid-template-columns: 1fr;
+  }
+
+  .map-sidebar {
+    order: -1;
+  }
+
+  .toast-container {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+  }
+
+  .toast {
+    min-width: auto;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-shell {
+    padding: 1rem 0.75rem 2rem;
+  }
+
+  .hero {
+    padding: 1.25rem;
+    border-radius: 0.75rem;
+  }
+
+  .spot-card,
+  .favorite-card {
+    padding: 1rem;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-outline {
+    width: 100%;
+    padding: 0.75rem;
+  }
+
+  .favorite-actions {
+    flex-direction: column;
+  }
+
+  .spot-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .spot-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Print styles */
+@media print {
+  .toast-container,
+  .btn-primary,
+  .btn-secondary,
+  .btn-outline,
+  .favorite-btn {
+    display: none !important;
+  }
+
+  .app-shell {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .hero {
+    background: none;
+    color: #000;
+    box-shadow: none;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .skeleton {
+    animation: none;
+    background: #e2e8f0;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .spot-card,
+  .favorite-card {
+    border-width: 2px;
+    border-color: #000;
+  }
+
+  .btn-primary {
+    background: #000;
+  }
+
+  .badge {
+    border: 1px solid currentColor;
+  }
+}
+
+/* Dark mode support (future enhancement) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+  }
+}
+
+/* Focus visible for accessibility */
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-outline:focus-visible,
+.favorite-btn:focus-visible {
+  outline: 2px solid #4c1d95;
+  outline-offset: 2px;
+}
+
+/* Selected state for comparison */
+.selected-for-compare {
+  border: 2px solid #4c1d95;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+}
+
+/* Comparison card hover effect */
+.compare-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.compare-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* History item animation */
+.history-item {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Empty state illustration */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  color: #64748b;
+}
+
+/* Success badge variant */
+.badge-success {
+  color: #166534;
+  background: #dcfce7;
+}
+
+/* Badge primary variant */
+.badge-primary {
+  color: #1e40af;
+  background: #dbeafe;
+}
+
+/* Badge secondary variant */
+.badge-secondary {
+  color: #475569;
+  background: #f1f5f9;
+}
+
+/* Active button state */
+.btn-secondary.active {
+  background: #4c1d95;
+  color: #ffffff;
+}
+
+.btn-secondary.active:hover {
+  background: #6d28d9;
+}
+
+/* Compare section enhancements */
+.compare-section {
+  margin-top: 2rem;
+}
+
+.compare-header h2 {
+  color: #4c1d95;
+}
+
+/* Toast notification improvements */
+.toast-container {
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+}
+
+/* Loading state full screen */
+.loading-state,
+.error-state {
+  min-height: 300px;
+}
+
+/* Error state icon */
+.error-state::before {
+  content: '⚠️';
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+/* No spots message */
+.no-spots {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  background: #ffffff;
+  border: 2px dashed #e2e8f0;
+  border-radius: 0.85rem;
+  color: #64748b;
+}
+
+/* Sunset summary pulse animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.quality-badge {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Condition card hover */
+.condition-card {
+  transition: transform 0.2s ease;
+}
+
+.condition-card:hover {
+  transform: scale(1.02);
+}
+
+/* Location badge on mobile */
+@media (max-width: 640px) {
+  .location-badge {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+  }
+}
+
+/* Visibility conditions responsive */
+@media (max-width: 640px) {
+  .visibility-conditions {
+    margin-top: 1rem;
+  }
+
+  .condition-card {
+    padding: 1rem;
+  }
+
+  .condition-value {
+    font-size: 0.9rem;
+  }
+}
+
+/* Spots count badge */
+.spots-count {
+  margin: 1rem 0;
+}
+
+.spots-count p {
+  display: inline-block;
+  background: #f1f5f9;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+/* Footer spacing */
+.app-shell > footer {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e2e8f0;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
