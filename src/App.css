@@ -1,0 +1,81 @@
+.app-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 3rem 1.25rem 4rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.hero {
+  background: linear-gradient(140deg, #1e293b, #0f172a 60%, #4c1d95);
+  color: #f8fafc;
+  border-radius: 1rem;
+  padding: 2.25rem;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.28);
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #facc15;
+}
+
+.hero h1 {
+  margin: 0.75rem 0;
+  font-size: clamp(1.85rem, 4.5vw, 2.75rem);
+  line-height: 1.15;
+}
+
+.hero-copy {
+  margin: 0;
+  max-width: 62ch;
+  color: #e2e8f0;
+}
+
+.panel-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.placeholder-card,
+.roadmap {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.85rem;
+  padding: 1.25rem;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7c2d12;
+  background: #ffedd5;
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+}
+
+.placeholder-card h2,
+.roadmap h2 {
+  margin: 0.85rem 0 0.5rem;
+  color: #0f172a;
+  font-size: 1.2rem;
+}
+
+.placeholder-card p {
+  margin: 0;
+  color: #334155;
+}
+
+.roadmap ul {
+  margin: 0.25rem 0 0;
+  padding-left: 1.1rem;
+  color: #334155;
+  display: grid;
+  gap: 0.45rem;
+}
