@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { getQualityColor } from '../constants/qualityConstants.js'
 
 /**
  * FavoritesView - View for managing saved favorite sunset spots
@@ -87,10 +88,4 @@ export function FavoritesView() {
       </section>
     </main>
   )
-}
-
-function getQualityColor(score) {
-  if (score >= 9) return 'high'
-  if (score >= 7) return 'medium'
-  return 'low'
 }
