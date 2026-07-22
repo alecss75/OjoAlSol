@@ -11,6 +11,7 @@ import {
 
 /**
  * Calculate sunset quality score based on weather conditions
+ * Now uses the centralized calculateSunsetQuality from openWeatherService
  * @param {Object} weatherData - Weather data from API
  * @returns {{score: number, quality: string, factors: string[]}} Quality assessment
  */

@@ -3,6 +3,8 @@ import { getQualityColor } from '../constants/qualityConstants.js'
 import { useFavorites } from '../hooks/useFavorites.js'
 import { getCurrentLocation } from '../services/locationService.js'
 import { findBestSunsetSpots } from '../services/sunsetSpotsService.js'
+import { getCurrentWeather } from '../services/openWeatherService.js'
+import { calculateSunsetQuality } from '../services/openWeatherService.js'
 
 /**
  * SunsetSpotsView - View for displaying nearby sunset spots
@@ -16,8 +18,27 @@ export function SunsetSpotsView() {
   const [sunData, setSunData] = useState(null)
   const [weather, setWeather] = useState(null)
   const [sunsetQuality, setSunsetQuality] = useState(null)
+  const [lastUpdated, setLastUpdated] = useState(null)
   
   const { toggleFavorite, isFavorite } = useFavorites('ojoalsol_spots_favorites')
+
+  /**
+   * Fetch weather and update sunset quality dynamically
+   */
+  const fetchWeatherData = useCallback(async (lat, lng) => {
+    try {
+      const weatherResult = await getCurrentWeather(lat, lng)
+      
+      if (weatherResult.success && weatherResult.data) {
+        setWeather(weatherResult.data)
+        const quality = calculateSunsetQuality(weatherResult.data)
+        setSunsetQuality(quality)
+        setLastUpdated(new Date())
+      }
+    } catch (err) {
+      console.error('Error fetching weather data:', err)
+    }
+  }, [])
 
   /**
    * Fetch user location and sunset spots
@@ -50,6 +71,7 @@ export function SunsetSpotsView() {
       setSunData(sunTimes)
       setWeather(weatherData)
       setSunsetQuality(quality)
+      setLastUpdated(new Date())
       
     } catch (err) {
       console.error('Error fetching location or spots:', err)
@@ -63,6 +85,21 @@ export function SunsetSpotsView() {
   useEffect(() => {
     fetchLocationAndSpots()
   }, [fetchLocationAndSpots])
+
+  // Set up auto-refresh for weather data every 5 minutes
+  useEffect(() => {
+    if (!userLocation) return
+    
+    // Initial weather fetch after location is loaded
+    fetchWeatherData(userLocation.lat, userLocation.lng)
+    
+    // Auto-refresh every 5 minutes
+    const refreshInterval = setInterval(() => {
+      fetchWeatherData(userLocation.lat, userLocation.lng)
+    }, 5 * 60 * 1000) // 5 minutes
+    
+    return () => clearInterval(refreshInterval)
+  }, [userLocation, fetchWeatherData])
 
   /**
    * Format time from ISO string to HH:mm
@@ -114,6 +151,44 @@ export function SunsetSpotsView() {
     if (visibilityKm >= 5) return 'Good'
     if (visibilityKm >= 3) return 'Fair'
     return 'Poor'
+  }
+
+  /**
+   * Get real-time visibility conditions with details
+   */
+  const getVisibilityConditions = () => {
+    if (!weather?.visibility) {
+      return {
+        description: 'Unknown',
+        distance: null,
+        status: 'unknown'
+      }
+    }
+    
+    const visibilityMeters = weather.visibility
+    const visibilityKm = visibilityMeters / 1000
+    
+    let status, description
+    if (visibilityKm >= 10) {
+      status = 'excellent'
+      description = 'Excellent visibility - clear views for miles'
+    } else if (visibilityKm >= 5) {
+      status = 'good'
+      description = 'Good visibility - clear horizon views'
+    } else if (visibilityKm >= 3) {
+      status = 'fair'
+      description = 'Fair visibility - some atmospheric haze'
+    } else {
+      status = 'poor'
+      description = 'Poor visibility - fog or heavy haze'
+    }
+    
+    return {
+      description,
+      distance: visibilityKm.toFixed(1),
+      status,
+      meters: visibilityMeters
+    }
   }
 
   /**
@@ -191,6 +266,27 @@ export function SunsetSpotsView() {
             <span className={`quality-badge quality-${sunsetQuality.quality.toLowerCase()}`}>
               Today's Sunset Quality: {sunsetQuality.quality} ({sunsetQuality.score}/100)
             </span>
+          </div>
+        )}
+        
+        {/* Real-time visibility conditions */}
+        {weather && (
+          <div className="visibility-conditions">
+            <div className="condition-card">
+              <h3>👁️ Current Visibility Conditions</h3>
+              <div className="condition-details">
+                <p className="condition-value">{getVisibilityConditions().description}</p>
+                {getVisibilityConditions().distance && (
+                  <p className="condition-metric">Distance: {getVisibilityConditions().distance} km</p>
+                )}
+                <p className="condition-extra">☁️ Cloud Coverage: {weather.cloudCoverage}%</p>
+                <p className="condition-extra">💧 Humidity: {weather.humidity}%</p>
+                <p className="condition-extra">🌡️ Temperature: {Math.round(weather.temperature)}°C</p>
+                {lastUpdated && (
+                  <p className="condition-timestamp">Last updated: {lastUpdated.toLocaleTimeString()}</p>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </header>
