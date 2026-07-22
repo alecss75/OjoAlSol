@@ -1,28 +1,19 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './App.css'
-import { HeroSection } from './components/HeroSection'
-import { PlaceholderCard } from './components/PlaceholderCard'
-import { RoadmapList } from './components/RoadmapList'
+import { NavBar } from './components/NavBar'
+import { HomeView, SunsetSpotsView, MapView, FavoritesView } from './views'
 
 function App() {
   return (
-    <main className="app-shell">
-      <HeroSection />
-
-      <section className="panel-grid" aria-label="Upcoming OjoAlSol experience">
-        <PlaceholderCard
-          title="Sunset spots near you"
-          description="Nearby recommendations will appear here with quality scores, visibility notes, and best arrival times."
-          badge="Coming soon"
-        />
-        <PlaceholderCard
-          title="Map and route preview"
-          description="An interactive map with orientation cues and route guidance will be integrated in the next phase."
-          badge="Planned"
-        />
-      </section>
-
-      <RoadmapList />
-    </main>
+    <BrowserRouter>
+      <NavBar />
+      <Routes>
+        <Route path="/" element={<HomeView />} />
+        <Route path="/spots" element={<SunsetSpotsView />} />
+        <Route path="/map" element={<MapView />} />
+        <Route path="/favorites" element={<FavoritesView />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
