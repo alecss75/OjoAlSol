@@ -4,10 +4,14 @@
  * Documentation: https://openweathermap.org/api
  */
 
-const OPENWEATHER_API_BASE = 'https://api.openweathermap.org/data/2.5';
+import { validateCoordinates } from '../utils/validation.js'
+import { ApiError, ValidationError } from '../utils/errors.js'
+import { API_BASE_URLS } from '../constants/apiConstants.js'
+
+const OPENWEATHER_API_BASE = API_BASE_URLS.OPENWEATHER
 
 // Note: API key should be set via environment variable VITE_OPENWEATHER_API_KEY
-const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY || '';
+const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY || ''
 
 /**
  * Get current weather data for a location
@@ -16,13 +20,19 @@ const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY || '';
  * @returns {Promise<Object>} Weather data
  */
 export async function getCurrentWeather(lat, lng) {
+  // Validate coordinates
+  const validation = validateCoordinates(lat, lng)
+  if (!validation.valid) {
+    throw new ValidationError('Invalid coordinates', validation.errors)
+  }
+
   if (!API_KEY) {
-    console.warn('OpenWeatherMap API key not configured');
+    console.warn('OpenWeatherMap API key not configured')
     return {
       success: false,
       error: 'API key not configured',
       data: null
-    };
+    }
   }
 
   const params = new URLSearchParams({
@@ -30,16 +40,16 @@ export async function getCurrentWeather(lat, lng) {
     lon: lng.toString(),
     appid: API_KEY,
     units: 'metric' // Celsius
-  });
+  })
 
   try {
-    const response = await fetch(`${OPENWEATHER_API_BASE}/weather?${params.toString()}`);
+    const response = await fetch(`${OPENWEATHER_API_BASE}/weather?${params.toString()}`)
     
     if (!response.ok) {
-      throw new Error(`OpenWeatherMap API error: ${response.status}`);
+      throw new ApiError(`OpenWeatherMap API error: ${response.status}`, response.status)
     }
 
-    const data = await response.json();
+    const data = await response.json()
     
     return {
       success: true,
@@ -57,14 +67,14 @@ export async function getCurrentWeather(lat, lng) {
         sunrise: new Date(data.sys.sunrise * 1000).toISOString(),
         sunset: new Date(data.sys.sunset * 1000).toISOString()
       }
-    };
+    }
   } catch (error) {
-    console.error('Error fetching weather data:', error);
+    console.error('Error fetching weather data:', error)
     return {
       success: false,
       error: error.message,
       data: null
-    };
+    }
   }
 }
 
@@ -75,13 +85,19 @@ export async function getCurrentWeather(lat, lng) {
  * @returns {Promise<Object>} Forecast data (5 days / 3 hour intervals)
  */
 export async function getWeatherForecast(lat, lng) {
+  // Validate coordinates
+  const validation = validateCoordinates(lat, lng)
+  if (!validation.valid) {
+    throw new ValidationError('Invalid coordinates', validation.errors)
+  }
+
   if (!API_KEY) {
-    console.warn('OpenWeatherMap API key not configured');
+    console.warn('OpenWeatherMap API key not configured')
     return {
       success: false,
       error: 'API key not configured',
       data: null
-    };
+    }
   }
 
   const params = new URLSearchParams({
@@ -89,16 +105,16 @@ export async function getWeatherForecast(lat, lng) {
     lon: lng.toString(),
     appid: API_KEY,
     units: 'metric'
-  });
+  })
 
   try {
-    const response = await fetch(`${OPENWEATHER_API_BASE}/forecast?${params.toString()}`);
+    const response = await fetch(`${OPENWEATHER_API_BASE}/forecast?${params.toString()}`)
     
     if (!response.ok) {
-      throw new Error(`OpenWeatherMap API error: ${response.status}`);
+      throw new ApiError(`OpenWeatherMap API error: ${response.status}`, response.status)
     }
 
-    const data = await response.json();
+    const data = await response.json()
     
     // Process forecast data to extract relevant information
     const forecast = data.list.map(item => ({
@@ -112,7 +128,7 @@ export async function getWeatherForecast(lat, lng) {
       weatherDescription: item.weather[0].description,
       windSpeed: item.wind.speed,
       pop: item.pop // Probability of precipitation
-    }));
+    }))
 
     return {
       success: true,
@@ -122,14 +138,14 @@ export async function getWeatherForecast(lat, lng) {
         timezone: data.city.timezone,
         forecast
       }
-    };
+    }
   } catch (error) {
-    console.error('Error fetching weather forecast:', error);
+    console.error('Error fetching weather forecast:', error)
     return {
       success: false,
       error: error.message,
       data: null
-    };
+    }
   }
 }
 
@@ -143,63 +159,63 @@ export function calculateSunsetQuality(weatherData) {
     return { score: 0, quality: 'Unknown', factors: [] };
   }
 
-  let score = 100;
-  const factors = [];
+  let score = 100
+  const factors = []
 
   // Cloud coverage impact (optimal: 20-60%)
-  const cloudCoverage = weatherData.cloudCoverage || 0;
+  const cloudCoverage = weatherData.cloudCoverage || 0
   if (cloudCoverage < 20) {
-    score -= 20;
-    factors.push('Clear sky - good visibility but less dramatic colors');
+    score -= 20
+    factors.push('Clear sky - good visibility but less dramatic colors')
   } else if (cloudCoverage > 80) {
-    score -= 40;
-    factors.push('Heavy cloud cover - may obscure sunset');
+    score -= 40
+    factors.push('Heavy cloud cover - may obscure sunset')
   } else if (cloudCoverage >= 20 && cloudCoverage <= 60) {
-    score += 10;
-    factors.push('Optimal cloud coverage for colorful sunset');
+    score += 10
+    factors.push('Optimal cloud coverage for colorful sunset')
   }
 
   // Visibility impact
-  const visibility = weatherData.visibility || 10000; // meters
+  const visibility = weatherData.visibility || 10000 // meters
   if (visibility < 5000) {
-    score -= 30;
-    factors.push('Poor visibility');
+    score -= 30
+    factors.push('Poor visibility')
   } else if (visibility >= 5000 && visibility < 10000) {
-    score -= 10;
-    factors.push('Moderate visibility');
+    score -= 10
+    factors.push('Moderate visibility')
   } else {
-    factors.push('Excellent visibility');
+    factors.push('Excellent visibility')
   }
 
   // Precipitation probability
-  const pop = weatherData.pop || 0;
+  const pop = weatherData.pop || 0
   if (pop > 0.5) {
-    score -= 30;
-    factors.push('High chance of precipitation');
+    score -= 30
+    factors.push('High chance of precipitation')
   } else if (pop > 0.2) {
-    score -= 15;
-    factors.push('Some chance of precipitation');
+    score -= 15
+    factors.push('Some chance of precipitation')
   }
 
   // Normalize score to 0-100
-  score = Math.max(0, Math.min(100, score));
+  score = Math.max(0, Math.min(100, score))
 
-  let quality;
+  let quality
   if (score >= 80) {
-    quality = 'Excellent';
+    quality = 'Excellent'
   } else if (score >= 60) {
-    quality = 'Good';
+    quality = 'Good'
   } else if (score >= 40) {
-    quality = 'Fair';
+    quality = 'Fair'
   } else {
-    quality = 'Poor';
+    quality = 'Poor'
   }
 
-  return { score, quality, factors };
+  return { score, quality, factors }
 }
 
 export default {
   getCurrentWeather,
   getWeatherForecast,
   calculateSunsetQuality
-};
+}
