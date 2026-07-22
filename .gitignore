@@ -2,12 +2,14 @@
 # Build artifacts
 dist/
 build/
-*.css
-*.js
-*.html
 
 # Dependencies
 node_modules/
+venv/
+.venv/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
 
 # Environment
 .env
@@ -21,15 +23,28 @@ node_modules/
 # Logs and temp files
 *.log
 *.tmp
-*.swp
 
-# Python
-__pycache__/
+# Compiled files
 *.pyc
-*.pyo
-*.pyd
+*.class
+*.o
+*.exe
+*.dll
+*.so
+*.a
+*.obj
+*.out
 
-# Compression
+# System files
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Compressed files
 *.zip
 *.gz
 *.tar
