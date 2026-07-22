@@ -1,45 +1,44 @@
 ```
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+dist/
+build/
+target/
+
 # Dependencies
+.venv/
+venv/
 node_modules/
+.mypy_cache/
+.pytest_cache/
+.gradle/
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
 
 # Environment
 .env
 .env.local
-*.env.*
+.env.*
 
-# Logs
-*.log
+# Editors
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
 
 # Coverage
 coverage/
 htmlcov/
 .coverage
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*.tmp
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Build outputs
-dist/
-build/
-target/
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.so
-*.egg-info/
-.eggs/
 
 # Compressed files
 *.zip
@@ -64,51 +63,4 @@ __pycache__/
 *.tar.bz2
 *.tar.xz
 *.tar.zst
-
-# Testing
-.mypy_cache/
-.pytest_cache/
-.nyc_output/
-coverage.xml
-
-# Java/Gradle
-*.class
-*.jar
-*.war
-*.ear
-.classpath
-.project
-.gradle/
-build/
-
-# C/C++
-*.o
-*.a
-*.so
-*.dll
-*.exe
-*.out
-*.obj
-
-# Go
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-
-# Ruby
-*.gem
-.bundle/
-vendor/bundle/
-
-# Rust
-Cargo.lock
-target/
-
-# Julia
-julia-*/
-
-# Zig
-zig*/
 ```
