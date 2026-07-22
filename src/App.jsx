@@ -2,17 +2,32 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './App.css'
 import { NavBar } from './components/NavBar'
 import { HomeView, SunsetSpotsView, MapView, FavoritesView } from './views'
+import { ToastContainer } from './components/ui/Toast'
+import { ToastProvider, useToast } from './hooks/useToast.jsx'
 
-function App() {
+function AppContent() {
+  const { toasts, removeToast } = useToast()
+
   return (
-    <BrowserRouter>
-      <NavBar />
+    <>
       <Routes>
         <Route path="/" element={<HomeView />} />
         <Route path="/spots" element={<SunsetSpotsView />} />
         <Route path="/map" element={<MapView />} />
         <Route path="/favorites" element={<FavoritesView />} />
       </Routes>
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+    </>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <NavBar />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </BrowserRouter>
   )
 }

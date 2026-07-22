@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getQualityColor } from '../constants/qualityConstants.js'
 import { useFavorites } from '../hooks/useFavorites.js'
+import { useToast } from '../hooks/useToast.jsx'
 import { getCurrentLocation } from '../services/locationService.js'
 import { findBestSunsetSpots } from '../services/sunsetSpotsService.js'
 import { getCurrentWeather } from '../services/openWeatherService.js'
@@ -21,6 +22,7 @@ export function SunsetSpotsView() {
   const [lastUpdated, setLastUpdated] = useState(null)
   
   const { toggleFavorite, isFavorite } = useFavorites('ojoalsol_spots_favorites')
+  const { success, error: showError } = useToast()
 
   /**
    * Fetch weather and update sunset quality dynamically
@@ -199,6 +201,20 @@ export function SunsetSpotsView() {
   }
 
   /**
+   * Handle toggle favorite with toast notification
+   */
+  const handleToggleFavorite = (spot) => {
+    const wasFavorite = isFavorite(spot.id)
+    toggleFavorite(spot)
+    
+    if (wasFavorite) {
+      success(`${spot.name} removed from favorites`)
+    } else {
+      success(`${spot.name} added to favorites! ❤️`)
+    }
+  }
+
+  /**
    * Render loading state
    */
   if (loading) {
@@ -316,7 +332,7 @@ export function SunsetSpotsView() {
                     </span>
                     <button 
                       className={`favorite-btn ${favorite ? 'active' : ''}`}
-                      onClick={() => toggleFavorite(spot)}
+                      onClick={() => handleToggleFavorite(spot)}
                       aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'}
                       title={favorite ? 'Remove from favorites' : 'Add to favorites'}
                     >

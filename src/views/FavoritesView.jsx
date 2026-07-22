@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { getQualityColor } from '../constants/qualityConstants.js'
 import { useFavorites } from '../hooks/useFavorites.js'
 import { useVisitHistory } from '../hooks/useVisitHistory.js'
+import { useToast } from '../hooks/useToast.jsx'
 
 /**
  * FavoritesView - View for managing saved favorite sunset spots
@@ -10,6 +11,7 @@ import { useVisitHistory } from '../hooks/useVisitHistory.js'
 export function FavoritesView() {
   const { favorites, removeFavorite, isFavorite, toggleFavorite, clearFavorites } = useFavorites('ojoalsol_spots_favorites')
   const { addVisit, hasVisited, getLastVisit, getVisitsCount } = useVisitHistory('ojoalsol_visit_history')
+  const { success, error, warning } = useToast()
   const [selectedForCompare, setSelectedForCompare] = useState([])
 
   /**
@@ -19,20 +21,23 @@ export function FavoritesView() {
     removeFavorite(spot.id)
     // Also remove from comparison if selected
     setSelectedForCompare((prev) => prev.filter((id) => id !== spot.id))
+    success(`${spot.name} removed from favorites`)
   }
 
   /**
    * Handle toggling selection for comparison
    */
   const handleToggleCompare = (spotId) => {
+    const spot = favorites.find((s) => s.id === spotId)
     setSelectedForCompare((prev) => {
       if (prev.includes(spotId)) {
         return prev.filter((id) => id !== spotId)
       } else {
         if (prev.length >= 3) {
-          alert('You can only compare up to 3 spots at a time')
+          warning('You can only compare up to 3 spots at a time')
           return prev
         }
+        success(`${spot?.name} added to comparison`)
         return [...prev, spotId]
       }
     })
@@ -43,7 +48,7 @@ export function FavoritesView() {
    */
   const handleViewDetails = (spot) => {
     addVisit(spot)
-    // Navigate to map or details view
+    success(`Marked ${spot.name} as visited!`)
     console.log('Viewing details for:', spot.name)
   }
 
