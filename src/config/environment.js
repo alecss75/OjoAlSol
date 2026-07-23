@@ -12,15 +12,6 @@ const REQUIRED_ENV_VARS = [
 ]
 
 /**
- * Optional environment variables with defaults
- */
-const OPTIONAL_ENV_VARS = {
-  VITE_OPENWEATHER_API_KEY: '',
-  VITE_APP_VERSION: '1.0.0',
-  VITE_DEBUG_MODE: 'false',
-}
-
-/**
  * Validate that required environment variables are set
  * @throws {ConfigError} If required variables are missing
  */

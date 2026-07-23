@@ -22,7 +22,7 @@ export function SunsetSpotsView() {
   const [lastUpdated, setLastUpdated] = useState(null)
   
   const { toggleFavorite, isFavorite } = useFavorites('ojoalsol_spots_favorites')
-  const { success, error: showError } = useToast()
+  const { success } = useToast()
 
   /**
    * Fetch weather and update sunset quality dynamically
