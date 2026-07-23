@@ -9,9 +9,9 @@ import { useToast } from '../hooks/useToast.jsx'
  * Allows users to compare and manage their preferred locations
  */
 export function FavoritesView() {
-  const { favorites, removeFavorite, isFavorite, toggleFavorite, clearFavorites } = useFavorites('ojoalsol_spots_favorites')
+  const { favorites, removeFavorite, isFavorite, toggleFavorite } = useFavorites('ojoalsol_spots_favorites')
   const { addVisit, hasVisited, getLastVisit, getVisitsCount } = useVisitHistory('ojoalsol_visit_history')
-  const { success, error, warning } = useToast()
+  const { success, warning } = useToast()
   const [selectedForCompare, setSelectedForCompare] = useState([])
 
   /**

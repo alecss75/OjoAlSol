@@ -1,7 +1,43 @@
 ```
-# Environment variables
-.env
-
 # Build artifacts
 dist/
+build/
+*.o
+*.obj
+*.out
+
+# Dependencies
+node_modules/
+vendor/
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# OS generated files
+.DS_Store
+Thumbs.db
 ```

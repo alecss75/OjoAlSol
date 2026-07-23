@@ -1,5 +1,5 @@
 import { Component } from 'react'
-import { AppError } from '../utils/errors.js'
+import { AppError } from '../../utils/errors.js'
 
 /**
  * Error Boundary component to catch and display errors
