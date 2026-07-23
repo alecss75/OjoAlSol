@@ -20,9 +20,22 @@ export function SpotCard({ spot }) {
         <p className="spot-time">⏰ Best time: {spot.bestTime}</p>
       </div>
       <p className="spot-description">{spot.description}</p>
-      <Link to="/spots" className="btn-primary">
-        View Details
-      </Link>
+      <div className="spot-footer" style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+        <Link to={`/map?spotId=${spot.id}`} className="btn-primary" style={{ flex: 1, textAlign: 'center' }}>
+          View Details
+        </Link>
+        {spot.latitude && spot.longitude && (
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${spot.latitude},${spot.longitude}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-outline"
+            style={{ flex: 1, textAlign: 'center' }}
+          >
+            Google Maps
+          </a>
+        )}
+      </div>
     </article>
   )
 }

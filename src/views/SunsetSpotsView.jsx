@@ -1,159 +1,37 @@
-import { useState, useEffect, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { getQualityColor } from '../constants/qualityConstants.js'
 import { useFavorites } from '../hooks/useFavorites.js'
 import { useToast } from '../hooks/useToast.jsx'
-import { getCurrentLocation } from '../services/locationService.js'
-import { findBestSunsetSpots } from '../services/sunsetSpotsService.js'
-import { getCurrentWeather } from '../services/openWeatherService.js'
-import { calculateSunsetQuality } from '../services/openWeatherService.js'
+import { useSunsetData } from '../hooks/useSunsetData.js'
+import { SunStatusBanners } from '../components/SunStatusBanners.jsx'
 
 /**
  * SunsetSpotsView - View for displaying nearby sunset spots
  * Shows a list of recommended locations with quality scores and details
  */
 export function SunsetSpotsView() {
-  const [userLocation, setUserLocation] = useState(null)
-  const [spots, setSpots] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [sunData, setSunData] = useState(null)
-  const [weather, setWeather] = useState(null)
-  const [sunsetQuality, setSunsetQuality] = useState(null)
-  const [lastUpdated, setLastUpdated] = useState(null)
+  const {
+    userLocation,
+    spots,
+    loading,
+    error,
+    sunData,
+    weather,
+    sunsetQuality,
+    lastUpdated,
+    fetchLocationAndSpots,
+    calculateSpotQuality,
+    getVisibilityDescription,
+    formatTime
+  } = useSunsetData()
   
   const { toggleFavorite, isFavorite } = useFavorites('ojoalsol_spots_favorites')
   const { success } = useToast()
 
-  /**
-   * Fetch weather and update sunset quality dynamically
-   */
-  const fetchWeatherData = useCallback(async (lat, lng) => {
-    try {
-      const weatherResult = await getCurrentWeather(lat, lng)
-      
-      if (weatherResult.success && weatherResult.data) {
-        setWeather(weatherResult.data)
-        const quality = calculateSunsetQuality(weatherResult.data)
-        setSunsetQuality(quality)
-        setLastUpdated(new Date())
-      }
-    } catch (err) {
-      console.error('Error fetching weather data:', err)
-    }
-  }, [])
 
-  /**
-   * Fetch user location and sunset spots
-   */
-  const fetchLocationAndSpots = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    
-    try {
-      // Get user's current location
-      const locationResult = await getCurrentLocation()
-      
-      if (!locationResult.success) {
-        throw new Error(locationResult.error || 'Unable to get your location')
-      }
-      
-      const { latitude, longitude } = locationResult.data
-      setUserLocation({ lat: latitude, lng: longitude })
-      
-      // Find best sunset spots near user location
-      const spotsResult = await findBestSunsetSpots(latitude, longitude, 10000)
-      
-      if (!spotsResult.success) {
-        throw new Error(spotsResult.error || 'Unable to fetch sunset spots')
-      }
-      
-      const { spots: foundSpots, sunData: sunTimes, weather: weatherData, sunsetQuality: quality } = spotsResult.data
-      
-      setSpots(foundSpots)
-      setSunData(sunTimes)
-      setWeather(weatherData)
-      setSunsetQuality(quality)
-      setLastUpdated(new Date())
-      
-    } catch (err) {
-      console.error('Error fetching location or spots:', err)
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
 
-  // Fetch data on component mount
-  useEffect(() => {
-    fetchLocationAndSpots()
-  }, [fetchLocationAndSpots])
 
-  // Set up auto-refresh for weather data every 5 minutes
-  useEffect(() => {
-    if (!userLocation) return
-    
-    // Initial weather fetch after location is loaded
-    fetchWeatherData(userLocation.lat, userLocation.lng)
-    
-    // Auto-refresh every 5 minutes
-    const refreshInterval = setInterval(() => {
-      fetchWeatherData(userLocation.lat, userLocation.lng)
-    }, 5 * 60 * 1000) // 5 minutes
-    
-    return () => clearInterval(refreshInterval)
-  }, [userLocation, fetchWeatherData])
 
-  /**
-   * Format time from ISO string to HH:mm
-   */
-  const formatTime = (isoString) => {
-    if (!isoString) return '--:--'
-    const date = new Date(isoString)
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: false 
-    })
-  }
-
-  /**
-   * Calculate quality score for a spot based on various factors
-   */
-  const calculateSpotQuality = (spot) => {
-    let score = 50 // Base score
-    
-    // Add points based on category
-    if (spot.category === 'beach') score += 20
-    if (spot.category === 'viewpoint') score += 15
-    if (spot.category === 'park') score += 10
-    
-    // Add points based on distance (closer is better)
-    const distanceKm = parseFloat(spot.distanceKm) || 999
-    if (distanceKm < 2) score += 20
-    else if (distanceKm < 5) score += 15
-    else if (distanceKm < 10) score += 10
-    
-    // Add weather-based quality if available
-    if (sunsetQuality && sunsetQuality.score) {
-      score += (sunsetQuality.score / 10)
-    }
-    
-    // Normalize to 0-10 scale
-    return Math.min(10, Math.max(0, score / 10)).toFixed(1)
-  }
-
-  /**
-   * Get visibility description based on weather data
-   */
-  const getVisibilityDescription = () => {
-    if (!weather?.visibility) return 'Unknown'
-    
-    const visibilityKm = weather.visibility / 1000
-    if (visibilityKm >= 10) return 'Excellent'
-    if (visibilityKm >= 5) return 'Good'
-    if (visibilityKm >= 3) return 'Fair'
-    return 'Poor'
-  }
 
   /**
    * Get real-time visibility conditions with details
@@ -276,6 +154,9 @@ export function SunsetSpotsView() {
           </div>
         )}
         
+        {/* Sun status banners */}
+        <SunStatusBanners sunData={sunData} />
+        
         {/* Current sunset quality summary */}
         {sunsetQuality && (
           <div className="sunset-summary">
@@ -366,8 +247,21 @@ export function SunsetSpotsView() {
                   <p className="spot-hours">🕐 Hours: {spot.openingHours}</p>
                 )}
                 
-                <div className="spot-footer">
-                  <button className="btn-primary">View Details</button>
+                <div className="spot-footer" style={{ display: 'flex', gap: '0.5rem' }}>
+                  <Link to={`/map?spotId=${spot.id}`} className="btn-primary" style={{ flex: 1, textAlign: 'center' }}>
+                    View Details
+                  </Link>
+                  {spot.latitude && spot.longitude && (
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${spot.latitude},${spot.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-outline"
+                      style={{ flex: 1, textAlign: 'center' }}
+                    >
+                      Google Maps
+                    </a>
+                  )}
                 </div>
               </article>
             )

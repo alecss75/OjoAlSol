@@ -2,10 +2,12 @@
  * MapView - View for displaying interactive map with sunset spots
  * Shows locations on a map with route guidance and orientation cues
  */
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
+import { useSearchParams } from 'react-router-dom'
 import L from 'leaflet'
-import { getCurrentLocation } from '../services/locationService'
+import 'leaflet/dist/leaflet.css'
+import { useSunsetData } from '../hooks/useSunsetData.js'
 import { DEFAULT_MAP_CENTER, DEFAULT_ZOOM_LEVEL, MARKER_COLORS } from '../constants/mapConstants'
 
 // Fix for default marker icon in React Leaflet
@@ -37,7 +39,7 @@ function UserLocationMarker({ position }) {
   })
 
   return (
-    <Marker position={[position.latitude, position.longitude]} icon={userIcon}>
+    <Marker position={[position.lat, position.lng]} icon={userIcon}>
       <Popup>Your current location</Popup>
     </Marker>
   )
@@ -48,8 +50,8 @@ function RouteLine({ start, end }) {
   if (!start || !end) return null
 
   const positions = [
-    [start.latitude, start.longitude],
-    [end.lat, end.lng],
+    [start.lat, start.lng],
+    [end.latitude, end.longitude],
   ]
 
   return (
@@ -64,21 +66,38 @@ function RouteLine({ start, end }) {
 }
 
 export function MapView() {
-  const [spots] = useState([
-    { id: 1, name: 'Mirador del Valle', lat: 40.4168, lng: -3.7038, visibility: 'high' },
-    { id: 2, name: 'Colina de las Flores', lat: 40.42, lng: -3.695, visibility: 'medium' },
-    { id: 3, name: 'Playa Norte', lat: 40.435, lng: -3.71, visibility: 'low' },
-  ])
-
-  const [userPosition, setUserPosition] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const {
+    spots,
+    userLocation,
+    loading,
+    error,
+    fetchLocationAndSpots,
+    calculateSpotQuality,
+    getVisibilityDescription
+  } = useSunsetData()
+  
   const [selectedSpot, setSelectedSpot] = useState(null)
   const mapRef = useRef(null)
+  const [searchParams] = useSearchParams()
+  const spotIdParam = searchParams.get('spotId')
 
-  // Get custom marker icon based on visibility
-  const getMarkerIcon = (visibility) => {
-    const color = MARKER_COLORS[visibility.toUpperCase()] || MARKER_COLORS.MEDIUM
+  // Auto-select spot from URL
+  useEffect(() => {
+    if (spots.length > 0 && spotIdParam) {
+      const targetSpot = spots.find(s => s.id.toString() === spotIdParam)
+      if (targetSpot && selectedSpot?.id !== targetSpot.id) {
+        handleNavigateToSpot(targetSpot)
+      }
+    }
+  }, [spots, spotIdParam, userLocation])
+
+  // Get custom marker icon based on quality score
+  const getMarkerIcon = (score) => {
+    let colorLevel = 'MEDIUM'
+    if (score >= 8) colorLevel = 'HIGH'
+    else if (score < 5) colorLevel = 'LOW'
+    
+    const color = MARKER_COLORS[colorLevel]
     return L.divIcon({
       className: 'custom-marker',
       html: `
@@ -109,37 +128,19 @@ export function MapView() {
     })
   }
 
-  // Handle getting user location
-  const handleGetUserLocation = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const result = await getCurrentLocation()
-      setUserPosition(result.data)
-      // Center map on user location
-      if (mapRef.current) {
-        mapRef.current.setView([result.data.latitude, result.data.longitude], 14)
-      }
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   // Handle navigating to a spot
   const handleNavigateToSpot = (spot) => {
     setSelectedSpot(spot)
-    if (mapRef.current && userPosition) {
+    if (mapRef.current && userLocation) {
       // Fit bounds to show both user location and spot
       const bounds = L.latLngBounds(
-        [userPosition.latitude, userPosition.longitude],
-        [spot.lat, spot.lng]
+        [userLocation.lat, userLocation.lng],
+        [spot.latitude, spot.longitude]
       )
       mapRef.current.fitBounds(bounds, { padding: [50, 50] })
     } else if (mapRef.current) {
       // Just center on the spot if no user location
-      mapRef.current.setView([spot.lat, spot.lng], 14)
+      mapRef.current.setView([spot.latitude, spot.longitude], 14)
     }
   }
 
@@ -155,8 +156,24 @@ export function MapView() {
 
       <section className="map-container" aria-label="Interactive map">
         <div className="map-wrapper" style={{ position: 'relative' }}>
+          {loading && (
+            <div style={{
+              position: 'absolute',
+              top: 0, left: 0, right: 0, bottom: 0,
+              backgroundColor: 'rgba(255,255,255,0.7)',
+              zIndex: 2000,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <div className="spinner"></div>
+              <p>Locating best spots...</p>
+            </div>
+          )}
+
           <MapContainer
-            center={[DEFAULT_MAP_CENTER.lat, DEFAULT_MAP_CENTER.lng]}
+            center={userLocation ? [userLocation.lat, userLocation.lng] : [DEFAULT_MAP_CENTER.lat, DEFAULT_MAP_CENTER.lng]}
             zoom={DEFAULT_ZOOM_LEVEL}
             style={{ height: '500px', width: '100%', borderRadius: '0.85rem', zIndex: 1 }}
             ref={mapRef}
@@ -167,28 +184,31 @@ export function MapView() {
             />
             
             {/* User location marker */}
-            <UserLocationMarker position={userPosition} />
+            <UserLocationMarker position={userLocation} />
             
             {/* Spots markers */}
-            {spots.map((spot) => (
-              <Marker
-                key={spot.id}
-                position={[spot.lat, spot.lng]}
-                icon={getMarkerIcon(spot.visibility)}
-                eventHandlers={{
-                  click: () => setSelectedSpot(spot),
-                }}
-              >
-                <Popup>
-                  <strong>{spot.name}</strong><br />
-                  Visibility: {spot.visibility}
-                </Popup>
-              </Marker>
-            ))}
+            {spots.map((spot) => {
+              const score = calculateSpotQuality(spot)
+              return (
+                <Marker
+                  key={spot.id}
+                  position={[spot.latitude, spot.longitude]}
+                  icon={getMarkerIcon(score)}
+                  eventHandlers={{
+                    click: () => setSelectedSpot(spot),
+                  }}
+                >
+                  <Popup>
+                    <strong>{spot.name}</strong><br />
+                    Score: {score}/10
+                  </Popup>
+                </Marker>
+              )
+            })}
             
             {/* Route line if a spot is selected and user has location */}
-            {selectedSpot && userPosition && (
-              <RouteLine start={userPosition} end={selectedSpot} />
+            {selectedSpot && userLocation && (
+              <RouteLine start={userLocation} end={selectedSpot} />
             )}
           </MapContainer>
 
@@ -204,7 +224,7 @@ export function MapView() {
           }}>
             <button
               className="btn-secondary"
-              onClick={handleGetUserLocation}
+              onClick={fetchLocationAndSpots}
               disabled={loading}
               style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
             >
@@ -216,7 +236,7 @@ export function MapView() {
                 onClick={() => handleNavigateToSpot(selectedSpot)}
                 style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
               >
-                🚀 Navigate
+                🚀 Focus Route
               </button>
             )}
           </div>
@@ -242,32 +262,39 @@ export function MapView() {
         <aside className="map-sidebar">
           <h2>Nearby Spots</h2>
           <ul className="spots-list">
-            {spots.map((spot) => (
-              <li key={spot.id} className="spot-item">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <strong>{spot.name}</strong>
-                  <span
-                    className={`badge badge-${spot.visibility}`}
-                    style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}
-                  >
-                    {spot.visibility}
+            {spots.map((spot) => {
+              const score = calculateSpotQuality(spot)
+              let colorLevel = 'medium'
+              if (score >= 8) colorLevel = 'high'
+              else if (score < 5) colorLevel = 'low'
+              
+              return (
+                <li key={spot.id} className={`spot-item ${selectedSpot?.id === spot.id ? 'active' : ''}`} style={selectedSpot?.id === spot.id ? { borderLeft: '4px solid var(--color-primary, #ff7b54)', backgroundColor: '#fff7ed' } : {}}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <strong>{spot.name}</strong>
+                    <span
+                      className={`badge badge-${colorLevel}`}
+                      style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}
+                    >
+                      {score}/10
+                    </span>
+                  </div>
+                  <span className="spot-coords">
+                    {spot.distanceKm} km away
                   </span>
-                </div>
-                <span className="spot-coords">
-                  {spot.lat.toFixed(4)}, {spot.lng.toFixed(4)}
-                </span>
-                <button
-                  className="btn-outline"
-                  onClick={() => handleNavigateToSpot(spot)}
-                  style={{ marginTop: '0.5rem', fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
-                >
-                  🗺️ View on Map
-                </button>
-              </li>
-            ))}
+                  <button
+                    className="btn-outline"
+                    onClick={() => handleNavigateToSpot(spot)}
+                    style={{ marginTop: '0.5rem', fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+                  >
+                    🗺️ View on Map
+                  </button>
+                </li>
+              )
+            })}
           </ul>
           
-          {selectedSpot && userPosition && (
+          {selectedSpot && userLocation && (
             <div className="route-info" style={{
               background: '#f0f9ff',
               border: '1px solid #bae6fd',
@@ -278,9 +305,19 @@ export function MapView() {
               <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem', color: '#0369a1' }}>
                 Route to {selectedSpot.name}
               </h3>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: '#0c4a6e' }}>
+              <p style={{ margin: '0 0 1rem', fontSize: '0.85rem', color: '#0c4a6e' }}>
                 Follow the dashed line on the map for directions from your location.
+                Distance: {selectedSpot.distanceKm} km.
               </p>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${selectedSpot.latitude},${selectedSpot.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary"
+                style={{ display: 'block', textAlign: 'center', textDecoration: 'none', padding: '0.5rem', fontSize: '0.9rem' }}
+              >
+                Open in Google Maps
+              </a>
             </div>
           )}
           
@@ -288,15 +325,15 @@ export function MapView() {
             <h3>Legend</h3>
             <div className="legend-item">
               <span className="legend-color high"></span>
-              <span>Excellent visibility</span>
+              <span>Excellent spot (8-10)</span>
             </div>
             <div className="legend-item">
               <span className="legend-color medium"></span>
-              <span>Good visibility</span>
+              <span>Good spot (5-8)</span>
             </div>
             <div className="legend-item">
               <span className="legend-color low"></span>
-              <span>Fair visibility</span>
+              <span>Fair spot (&lt;5)</span>
             </div>
             <div className="legend-item">
               <div style={{

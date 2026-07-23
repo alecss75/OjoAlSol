@@ -4,6 +4,7 @@ import { NavBar } from './components/NavBar'
 import { HomeView, SunsetSpotsView, MapView, FavoritesView } from './views'
 import { ToastContainer } from './components/ui/Toast'
 import { ToastProvider, useToast } from './hooks/useToast.jsx'
+import { SunsetDataProvider } from './context/SunsetDataContext.jsx'
 
 function AppContent() {
   const { toasts, removeToast } = useToast()
@@ -26,7 +27,9 @@ function App() {
     <BrowserRouter>
       <NavBar />
       <ToastProvider>
-        <AppContent />
+        <SunsetDataProvider>
+          <AppContent />
+        </SunsetDataProvider>
       </ToastProvider>
     </BrowserRouter>
   )

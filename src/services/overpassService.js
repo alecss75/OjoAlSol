@@ -4,8 +4,40 @@
  * Documentation: https://wiki.openstreetmap.org/wiki/Overpass_API
  */
 
-const OVERPASS_API_BASE = 'https://overpass-api.de/api/interpreter';
+const OVERPASS_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://lz4.overpass-api.de/api/interpreter',
+  'https://z.overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter'
+];
 
+async function fetchWithRetry(query, maxRetries = 3) {
+  let lastError;
+  for (let i = 0; i < maxRetries; i++) {
+    const endpoint = OVERPASS_ENDPOINTS[i % OVERPASS_ENDPOINTS.length];
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: query
+      });
+      if (response.ok) {
+        return response;
+      }
+      lastError = new Error(`Overpass API error: ${response.status}`);
+      // If it's a 4xx error (other than 429 Too Many Requests), don't retry
+      if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+        throw lastError;
+      }
+    } catch (error) {
+      lastError = error;
+    }
+    // Wait before retrying (exponential backoff)
+    if (i < maxRetries - 1) {
+      await new Promise(resolve => setTimeout(resolve, 1500 * Math.pow(2, i)));
+    }
+  }
+  throw lastError;
+}
 /**
  * Find scenic viewpoints near a location
  * @param {number} lat - Latitude
@@ -26,10 +58,7 @@ export async function findViewpoints(lat, lng, radius = 5000) {
   `;
 
   try {
-    const response = await fetch(OVERPASS_API_BASE, {
-      method: 'POST',
-      body: query
-    });
+    const response = await fetchWithRetry(query);
 
     if (!response.ok) {
       throw new Error(`Overpass API error: ${response.status}`);
@@ -83,10 +112,7 @@ export async function findParks(lat, lng, radius = 5000) {
   `;
 
   try {
-    const response = await fetch(OVERPASS_API_BASE, {
-      method: 'POST',
-      body: query
-    });
+    const response = await fetchWithRetry(query);
 
     if (!response.ok) {
       throw new Error(`Overpass API error: ${response.status}`);
@@ -140,10 +166,7 @@ export async function findBeaches(lat, lng, radius = 5000) {
   `;
 
   try {
-    const response = await fetch(OVERPASS_API_BASE, {
-      method: 'POST',
-      body: query
-    });
+    const response = await fetchWithRetry(query);
 
     if (!response.ok) {
       throw new Error(`Overpass API error: ${response.status}`);
@@ -205,10 +228,7 @@ export async function findAllSunsetSpots(lat, lng, radius = 5000) {
   `;
 
   try {
-    const response = await fetch(OVERPASS_API_BASE, {
-      method: 'POST',
-      body: query
-    });
+    const response = await fetchWithRetry(query);
 
     if (!response.ok) {
       throw new Error(`Overpass API error: ${response.status}`);

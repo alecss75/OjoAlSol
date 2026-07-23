@@ -717,10 +717,6 @@
     grid-template-columns: 1fr;
   }
 
-  .map-sidebar {
-    order: -1;
-  }
-
   .toast-container {
     bottom: 1rem;
     right: 1rem;

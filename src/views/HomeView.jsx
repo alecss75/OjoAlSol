@@ -1,38 +1,35 @@
 import { SpotCard, QuickAccessCard } from '../components/SpotCard'
+import { useSunsetData } from '../hooks/useSunsetData.js'
+import { SunStatusBanners } from '../components/SunStatusBanners.jsx'
 
 /**
  * Home view - Landing page with hero section and roadmap
  */
 export function HomeView() {
-  const topSpots = [
-    {
-      id: 1,
-      name: 'Playa Norte',
-      distance: '6.5 km',
-      qualityScore: 9.2,
-      visibility: 'Perfect',
-      bestTime: '19:40',
-      description: 'Beachfront location with unobstructed ocean views',
-    },
-    {
-      id: 2,
-      name: 'Mirador del Valle',
-      distance: '2.3 km',
-      qualityScore: 8.5,
-      visibility: 'Excellent',
-      bestTime: '19:45',
-      description: 'Panoramic view of the valley with western horizon exposure',
-    },
-    {
-      id: 3,
-      name: 'Colina de las Flores',
-      distance: '4.1 km',
-      qualityScore: 7.8,
-      visibility: 'Good',
-      bestTime: '19:50',
-      description: 'Elevated hilltop with minimal obstructions',
-    },
-  ]
+  const {
+    spots,
+    loading,
+    error,
+    sunData,
+    calculateSpotQuality,
+    getVisibilityDescription,
+    formatTime,
+    fetchLocationAndSpots
+  } = useSunsetData()
+
+  // Map real spots to the format expected by SpotCard, take top 3
+  const topSpots = spots.slice(0, 3).map((spot) => ({
+    id: spot.id,
+    name: spot.name,
+    distance: `${spot.distanceKm} km`,
+    qualityScore: calculateSpotQuality(spot),
+    visibility: getVisibilityDescription(),
+    bestTime: sunData?.sunset ? formatTime(sunData.sunset) : '--:--',
+    description: spot.description || `Scenic ${spot.category || 'spot'} for sunset viewing`,
+    latitude: spot.latitude,
+    longitude: spot.longitude,
+  }))
+
 
   return (
     <main className="app-shell">
@@ -43,12 +40,33 @@ export function HomeView() {
           OjoAlSol helps you discover scenic viewpoints around you and choose the best
           location before the sun goes down.
         </p>
+        
+        {/* Sun status banners */}
+        <SunStatusBanners sunData={sunData} />
       </header>
 
       <section className="panel-grid" aria-label="Top sunset spots near you">
-        {topSpots.map((spot) => (
-          <SpotCard key={spot.id} spot={spot} />
-        ))}
+        {loading ? (
+          <div className="loading-state" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem' }}>
+            <div className="spinner"></div>
+            <p>Finding the best spots near you...</p>
+          </div>
+        ) : error ? (
+          <div className="error-state" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem' }}>
+            <p className="error-message">⚠️ {error}</p>
+            <button className="btn-primary" onClick={fetchLocationAndSpots} style={{ marginTop: '1rem' }}>
+              Try Again
+            </button>
+          </div>
+        ) : topSpots.length === 0 ? (
+          <div className="no-spots" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem' }}>
+            <p>No sunset spots found nearby. Try exploring the map.</p>
+          </div>
+        ) : (
+          topSpots.map((spot) => (
+            <SpotCard key={spot.id} spot={spot} />
+          ))
+        )}
       </section>
 
       <section className="quick-access-section" aria-label="Quick access to other views">
