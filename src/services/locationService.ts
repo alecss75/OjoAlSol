@@ -1,12 +1,38 @@
 /**
  * Location Service
  * Handles geolocation and position management
+ * Uses Capacitor Geolocation on native, browser API on web
  */
 
+import { Capacitor } from '@capacitor/core';
+import { Geolocation, type Position, type PositionOptions } from '@capacitor/geolocation';
 import { LocationResponse, LocationData } from './types.js';
 
 /**
- * Get current user location using browser Geolocation API
+ * Check if running on native platform (iOS/Android)
+ */
+function isNative(): boolean {
+  return Capacitor.isNativePlatform();
+}
+
+/**
+ * Convert Capacitor Position to LocationData
+ */
+function positionToLocationData(position: Position): LocationData {
+  return {
+    latitude: position.coords.latitude,
+    longitude: position.coords.longitude,
+    accuracy: position.coords.accuracy,
+    altitude: position.coords.altitude ?? null,
+    heading: position.coords.heading ?? null,
+    speed: position.coords.speed ?? null,
+    timestamp: position.timestamp,
+  };
+}
+
+/**
+ * Get current user location
+ * Uses Capacitor Geolocation on native, browser API on web
  * @param options - Geolocation options
  * @returns Location data with lat, lng, and accuracy
  */
@@ -19,6 +45,22 @@ export async function getCurrentLocation(options: PositionOptions = {}): Promise
 
   const mergedOptions = { ...defaultOptions, ...options };
 
+  if (isNative()) {
+    try {
+      const position = await Geolocation.getCurrentPosition(mergedOptions);
+      return { success: true, data: positionToLocationData(position) };
+    } catch (error) {
+      let errorMessage: string;
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else {
+        errorMessage = 'An unknown error occurred';
+      }
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  // Web fallback - use browser Geolocation API
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
       resolve({
@@ -65,6 +107,7 @@ export async function getCurrentLocation(options: PositionOptions = {}): Promise
 
 /**
  * Watch user location continuously
+ * Uses Capacitor Geolocation on native, browser API on web
  * @param callback - Function to call on position update
  * @param options - Geolocation options
  * @returns Cancel watch function
@@ -81,6 +124,27 @@ export function watchLocation(
 
   const mergedOptions = { ...defaultOptions, ...options };
 
+  if (isNative()) {
+    let watchId: string;
+
+    Geolocation.watchPosition(mergedOptions, (position, err) => {
+      if (err) {
+        callback({ success: false, error: err.message });
+      } else if (position) {
+        callback({ success: true, data: positionToLocationData(position) });
+      }
+    }).then((id) => {
+      watchId = id;
+    });
+
+    return async () => {
+      if (watchId) {
+        await Geolocation.clearWatch({ id: watchId });
+      }
+    };
+  }
+
+  // Web fallback
   if (!navigator.geolocation) {
     throw new Error('Geolocation is not supported by your browser');
   }
@@ -103,7 +167,6 @@ export function watchLocation(
     mergedOptions
   );
 
-  // Return cancel function
   return () => {
     navigator.geolocation.clearWatch(watchId);
   };
@@ -142,4 +205,15 @@ export function coordinatesToString(lat: number, lng: number): string {
   const latFormatted = formatCoordinates(lat, 'lat');
   const lngFormatted = formatCoordinates(lng, 'lng');
   return `${latFormatted}, ${lngFormatted}`;
+}
+
+/**
+ * Request location permissions (native only)
+ */
+export async function requestLocationPermission(): Promise<'granted' | 'denied'> {
+  if (isNative()) {
+    const result = await Geolocation.requestPermissions();
+    return result.location === 'granted' ? 'granted' : 'denied';
+  }
+  return 'granted'; // Web handles permission via browser prompt
 }

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">OjoAlSol</string>
+    <string name="title_activity_main">OjoAlSol</string>
+    <string name="package_name">com.ojoalsol.app</string>
+    <string name="custom_url_scheme">com.ojoalsol.app</string>
+</resources>
