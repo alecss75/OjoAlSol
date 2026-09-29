@@ -1,0 +1,24 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Scope this session to OjoAlSol only.
+  // The permission rule blocks read/edit/write/patch on any path outside this
+  // project. The policy statement is the stronger form: it is applied after
+  // saved approvals, so it also overrides a previous "Allow always".
+  "permissions": [
+    { "action": "external_directory", "resource": "*", "effect": "deny" }
+  ],
+
+  "experimental": {
+    "policies": [
+      { "action": "permission", "resource": "external_directory:*", "effect": "deny" }
+    ]
+  },
+
+  // node_modules and dist are synced through OneDrive and are not useful to read.
+  "watcher": {
+    "ignore": ["node_modules/**", "dist/**"]
+  },
+
+  "formatter": true
+}
